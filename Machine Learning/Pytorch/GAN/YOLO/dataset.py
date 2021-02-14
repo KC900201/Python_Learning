@@ -37,7 +37,7 @@ class VOC(torch.utils.data.Dataset):
             image, boxes = self.transform(image, boxes)
 
         # Convert to cells
-        label_matrix = torch.zeros((self.S, self.S, self.C + 5))
+        label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B)) # One bounding box per cell
         for box in boxes:
             class_label, x, y, width, height = box.tolist()
             class_label = int(class_label)
@@ -58,3 +58,4 @@ class VOC(torch.utils.data.Dataset):
                 label_matrix[i, j, class_label] = 1
 
         return image, label_matrix
+
