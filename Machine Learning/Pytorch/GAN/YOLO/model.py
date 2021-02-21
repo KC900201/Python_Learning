@@ -57,8 +57,10 @@ class Yolov1(nn.Module):
                                     )
                            ]
                 in_channels = x[1]
+
             elif type(x) == str:
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+                
             elif type(x) == list:
                 conv1 = x[0] # Tuple
                 conv2 = x[1] # Tuple

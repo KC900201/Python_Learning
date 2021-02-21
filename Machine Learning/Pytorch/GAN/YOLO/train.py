@@ -3,25 +3,19 @@ Main file for training YOLO model on Pascal VOC dataset
 """
 
 import torch
-import torchvision.transforms as transforms
 import torch.optim as optim
-import torchvision.transforms.functional as FT
-from tqdm import tqdm
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from model import Yolov1
+from tqdm import tqdm
+
 from dataset import VOC
+from loss import YoloLoss
+from model import Yolov1
 from utils import (
-    non_max_suppression,
     mean_average_precision,
-    intersection_over_union,
-    cellboxes_to_boxes,
     get_bboxes,
-    plot_image,
-    save_checkpoint,
     load_checkpoint,
 )
-
-from loss import YoloLoss
 
 seed = 123
 torch.manual_seed(seed)
@@ -140,7 +134,6 @@ def main():
         #    time.sleep(10)
 
         train_fn(train_loader, model, optimizer, loss_fn)
-
 
 if __name__ == "__main__":
     main()
