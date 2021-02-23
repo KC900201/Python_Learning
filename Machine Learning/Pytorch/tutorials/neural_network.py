@@ -14,16 +14,15 @@ class Net(nn.Module):
 
         # 1 input image channel, 6 output channels, 3*3 image dim
         # kernel
-        self.conv1 = nn.Conv2d(1, 6, 3)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
         # Second 2D convolutional layer,taking in 32 input layers
-        # output 64 convolutional features, with square kernel size of 3
-        self.conv2 = nn.Conv2d(6, 16, 3)
-
-        self.dropout1 = nn.Dropout2d(0.25)
-        self.dropout2 = nn.Dropout2d(0.5)
-
+        # output 64 convolutional features, with square kernel size of 5
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        # self.dropout1 = nn.Dropout2d(0.25)
+        # self.dropout2 = nn.Dropout2d(0.5)
         # First fully connected layer
-        self.fc1 = nn.Linear(16 * 6 * 6, 120) # 6 x 6 from image dimension
+        self.fc1 = nn.Linear(16 * 5 * 5, 120) # 6 x 6 from image dimension
         # Second fully connected layer that outputs our 10 labels
         self.fc2 = nn.Linear(120, 84)
         # Third fully connected layer
@@ -33,25 +32,13 @@ class Net(nn.Module):
     # pass data into computation graph (neural network)
     def forward(self, x):
         # Pass data through conv1
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        # Pass data through conv2
-        x = x.view(-1, self.num_flat_features(x))
+        x = self.pool(F.relu(self.conv1(x)))
+        # # Pass data through conv2
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        # Run max pooling over x
-        # x = F.max_pool2d(x, 2)
-        # x = self.dropout1(x)
-        # # Flatten x with start_dim = 1
-        # x = torch.flatten(x, 1)
-        # # Pass data through fc1
-        # x = self.fc1(x)
-        # x = F.relu(x)
-        # x = self.dropout2(x)
-        # x = self.fc2(x)
-        # # Apply softmax to output
-        # output = F.log_softmax(x, dim=1)
         return x
 
     def num_flat_features(self, x):
