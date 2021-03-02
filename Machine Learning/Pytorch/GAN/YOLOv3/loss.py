@@ -20,7 +20,7 @@ class YoloLoss(nn.Module):
 
     def forward(self, predictions, target, anchors):
         obj = target[..., 0] == 1
-        noobj = targe[..., 0] == 0
+        noobj = target[..., 0] == 0
 
         # No object loss
         no_object_loss = self.bce(
