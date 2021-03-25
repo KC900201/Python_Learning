@@ -29,6 +29,12 @@ class Discriminator(nn.Module):
             layers.append(CNNBlock(in_channels, feature, stride=1 if feature == features[-1] else 2), )
             in_channels = feature
 
+        layers.append(
+            nn.Conv2d(
+                in_channels, 1, kernel_size=4, stride=1, padding=1, padding_mode="reflect"
+            ),
+        )
+
         self.model = nn.Sequential(*layers)
 
     def forward(self, x, y):
@@ -38,8 +44,8 @@ class Discriminator(nn.Module):
         return self.model(x)
 
 def test():
-    x = torch.randn((1, 3, 256, 256))
-    y = torch.randn((1, 3, 256, 256))
+    x = torch.randn((1, 3, 286, 286))
+    y = torch.randn((1, 3, 286, 286))
     model = Discriminator()
     preds = model(x, y)
     print(preds.shape)
