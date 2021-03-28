@@ -56,12 +56,12 @@ def main():
         load_checkpoint(config.CHECKPOINTS_GEN, gen, opt_gen, config.LEARNING_RATE)
         load_checkpoint(config.CHECKPOINTS_DISC, disc, opt_disc, config.LEARNING_RATE)
 
-    train_dataset = MapDataset('../data/maps/train')
+    train_dataset = MapDataset('..\data\maps\train')
     train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=config.NUM_WORKERS)
     g_scaler = torch.cuda.amp.GradScaler()
     d_scaler = torch.cuda.amp.GradScaler()
 
-    val_dataset = MapDataset('../data/maps/test')
+    val_dataset = MapDataset('..\data\maps\test')
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     for epoch in range(config.NUM_EPOCHS):
