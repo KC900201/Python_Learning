@@ -1,10 +1,7 @@
-import torch
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 
 import os
 from PIL import Image
-import config
 import numpy as np
 
 
@@ -35,6 +32,9 @@ class HorseZebraDataset(Dataset):
 
         if self.transform:
             augmentations = self.transform(image=zebra_img, image0=horse_img)
-#             continue 3/31/2021
+            zebra_img = augmentations["image"]
+            horse_img = augmentations["image0"]
+
+        return zebra_img, horse_img
 
 

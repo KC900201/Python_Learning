@@ -11,6 +11,7 @@ BATCH_SIZE = 1
 NUM_EPOCHS = 200
 IMAGE_SIZE = 256
 CHANNELS_IMG = 3
+SAVE_MODEL = True
 
 L1_LAMBDA = 100
 LAMBDA_GP = 10
@@ -27,6 +28,9 @@ CHECKPOINT_GEN_Z = "genz.pth.tar"
 
 CHECKPOINT_CRITIC_H = "critich.pth.tar"
 CHECKPOINT_CRITIC_Z = "criticz.pth.tar"
+
+TRAIN_DIR = "data/train_dir"
+TEST_DIR = "data/test_dir"
 
 transforms = A.Compose(
     [
