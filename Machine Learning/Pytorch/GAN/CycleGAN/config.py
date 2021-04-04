@@ -1,8 +1,7 @@
 # Set up configurations and
 # constants for model training and testing, dataset loading
-import torch
 import albumentations as A
-
+import torch
 from albumentations.pytorch import ToTensorV2
 
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -16,12 +15,13 @@ SAVE_MODEL = True
 L1_LAMBDA = 100
 LAMBDA_GP = 10
 LAMBDA_CYCLE = 10
+LAMBDA_IDENTITY = 0.0
 
 NUM_WORKERS = 4
 NUM_EPOCHS = 500
 
 LOAD_MODEL = True
-SAVE_MODEL = True
+SAVE_MODEL = False
 
 CHECKPOINT_GEN_H = "genh.pth.tar"
 CHECKPOINT_GEN_Z = "genz.pth.tar"

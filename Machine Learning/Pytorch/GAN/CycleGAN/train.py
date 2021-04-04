@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 # Import functions from src code
 import config
-import sys
 from dataset import HorseZebraDataset
 from discriminator_model import Discriminator
 from generator_model import Generator
@@ -28,7 +27,61 @@ def train_fn(disc_H, disc_Z, gen_Z, gen_H, loader, opt_disc, opt_gen, l1, mse, d
             D_H_fake = disc_H(fake_horse.detach())
             D_H_real_loss = mse(D_H_real, torch.ones_like(D_H_real))
             D_H_fake_loss = mse(D_H_fake, torch.ones_like(D_H_fake))
-#             Continue 4/1/2021 midnight
+            D_H_loss = D_H_real_loss + D_H_fake_loss
+
+            fake_zebra = gen_Z(horse)
+            D_Z_real = disc_H(horse)
+            D_Z_fake = disc_H(fake_horse.detach())
+            D_Z_real_loss = mse(D_Z_real, torch.ones_like(D_Z_real))
+            D_Z_fake_loss = mse(D_Z_fake, torch.ones_like(D_Z_fake))
+            D_Z_loss = D_Z_real_loss + D_Z_fake_loss
+
+            # put it together
+            D_loss = (D_H_loss + D_Z_loss) / 2
+
+        opt_disc.zero_grad()
+        d_scaler.scale(D_loss).backward()
+        d_scaler.step(opt_disc)
+        d_scaler.update()
+
+        # Train Generators H and Z
+        with torch.cuda.amp.autocast():
+            # adversarial loss for both generators
+            D_H_fake = disc_H(fake_horse)
+            D_Z_fake = disc_Z(fake_zebra)
+            loss_G_H = mse(D_H_fake, torch.ones_like(D_H_fake))
+            loss_G_Z = mse(D_H_fake, torch.ones_like(D_H_fake))
+
+            # cycle loss
+            cycle_zebra = gen_Z(fake_horse)
+            cycle_horse = gen_Z(fake_zebra)
+            cycle_zebra_loss = l1(zebra, cycle_zebra)
+            cycle_horse_loss = l1(horse, cycle_horse)
+
+            # identity loss
+            identity_zebra = gen_Z(horse)
+            identity_horse = gen_Z(zebra)
+            identity_zebra_loss = l1(zebra, identity_zebra)
+            identity_horse_loss = l1(horse, identity_horse)
+
+            # sum all losses
+            G_loss = (
+                    loss_G_Z
+                    + loss_G_H
+                    + cycle_zebra * config.LAMBDA_CYCLE
+                    + cycle_horse * config.LAMBDA_CYCLE
+                    + identity_horse_loss * config.LAMBDA_IDENTITY
+                    + identity_zebra_loss * config.LAMBDA_IDENTITY
+            )
+
+        opt_disc.zero_grad()
+        d_scaler.scale(G_loss).backward()
+        d_scaler.step(opt_gen)
+        d_scaler.update()
+
+        if idx % 200 == 0:
+            save_image(fake_horse * 0.5 + 0.5, f"saved_images/horse_{idx}.png")
+            save_image(fake_zebra * 0.5 + 0.5, f"saved_images/zebra_{idx}.png")
 
 
 def main():
@@ -67,7 +120,7 @@ def main():
         )
 
     dataset = HorseZebraDataset(
-        root_horse=config.TRAIN_DIR + "/horse", root_zebra=config.TRAIN_DIR + "/zebra", transform=config.transforms
+        root_horse=config.TRAIN_DIR + "/horses", root_zebra=config.TRAIN_DIR + "/zebras", transform=config.transforms
     )
 
     loader = DataLoader(
