@@ -49,5 +49,10 @@ class Discriminator(nn.Module):
         out = self.fade_in(alpha,downscaled, out)
 
         for step in range(cur_steps+1, len(self.prog_blocks)):
-            pass # Continue on 4/10/2021
+            out = self.prog_blocks[step](out)
+            out = self.avg_pool(out)
+
+        out = self.minibatch_std(out)
+        return self.final_block(out).view(out.shape[0], -1)
+
 
