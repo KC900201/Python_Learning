@@ -1,5 +1,5 @@
+import numpy as np
 import torch
-import torch.nn as nn
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 my_tensor = torch.tensor([1, 2, 3])
@@ -12,6 +12,20 @@ def convert_tensor():
     print(tensor.shape)
     print(tensor)
     print(tensor.bool())
+    print(tensor.short())
+    print(tensor.long())
+    print(tensor.half())
+    print(tensor.float())  # Important (float32)
+    print(tensor.double())  # float64
+
+    # Array to np conversion (Important)
+    np_array = np.zeros((5, 5))
+    print(np_array)
+    tensor_np = torch.from_numpy(np_array)
+    print(tensor_np)
+    np_array_back = tensor_np.numpy()
+    print(np_array_back)
+
 
 def init_tensor(x):
     x = torch.zeros(3, 3)
