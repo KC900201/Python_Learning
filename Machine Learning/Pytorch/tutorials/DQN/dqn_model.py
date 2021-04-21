@@ -1,19 +1,16 @@
-import gym
-import math
 import random
-import numpy as np
+from collections import namedtuple
+
+import gym
 import matplotlib
 import matplotlib.pyplot as plt
-
-from collections import namedtuple
-from itertools import count
-from PIL import Image
-
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
+from PIL import Image
+
+env = gym.make('CartPole-v0').unwrapped
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,7 +19,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 is_ipython = 'inline' in matplotlib.get_backend()
 
 if (is_ipython):
-    from IPython import display
+    pass
 
 plt.ion()
 
@@ -49,6 +46,7 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
+
 # Initialize DQN model
 # Revise on DQN algorithm. Reference URL -> https://medium.com/@markus.x.buchholz/deep-reinforcement-learning-introduction-deep-q-network-dqn-algorithm-fb74bf4d6862;
 # https://openai.com/blog/openai-baselines-dqn/#:~:text=DQN%3A%20A%20reinforcement%20learning%20algorithm,values%20tied%20to%20specific%20actions.
@@ -71,5 +69,22 @@ class DQN(nn.Module):
 
         convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+        linear_input_size = convw * convh * 32
+        self.head = nn.Linear(linear_input_size, outputs)
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        return self.head(x.view(x.size(0), -1))
+
 
 # Input extraction
+
+resize = T.Compose([T.ToPILImage(), T.Resize(40, interpolation=Image.CUBIC), T.ToTensor()])
+
+
+def get_cart_location(screen_width):
+    world_width = env.x_threshold * 2
+    scale = screen_width / world_width
+    return int(env.state[0] * scale * screen_width / 2.0)  # MIDDLE OF CART
