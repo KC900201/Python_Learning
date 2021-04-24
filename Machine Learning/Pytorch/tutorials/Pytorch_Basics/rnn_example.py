@@ -86,7 +86,7 @@ def check_acc(loader, model):
 
     with torch.no_grad():
         for x, y in loader:
-            x = x.to(device=device)
+            x = x.to(device=device).squeeze(1)
             y = y.to(device=device)
 
             scores = model(x)
