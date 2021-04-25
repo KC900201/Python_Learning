@@ -21,24 +21,25 @@ num_epochs = 2
 
 
 # Create Bidirectional RNN model
-class RNN_LSTM(nn.Module):
+class BRNN(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, num_classes):
-        super(RNN_LSTM, self).__init__()
+        super(BRNN, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
         # N x time sequence x features
-        self.fc = nn.Linear(hidden_size, num_classes)
+        self.fc = nn.Linear(hidden_size * 2, num_classes) # Fully connected layer
 
     def forward(self, x):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+        # hidden state
+        h0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_size).to(device)
+        # cell state
+        c0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_size).to(device)
 
         # Forward Prop
         out, _ = self.lstm(x, (h0, c0))
         # out = out.reshape(out.shape[0], -1)
-        out = self.fc(out[:, -1, :])
+        out = self.fc(out[:, -1, :]) # retrieve the last hidden state of LSTM
         return out
 
 
@@ -50,7 +51,7 @@ test_dataset = datasets.MNIST(root='../../../../data/', train=False, transform=t
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 # Initialize network
-model = RNN_LSTM(input_size, hidden_size, num_layers, num_classes).to(device)
+model = BRNN(input_size, hidden_size, num_layers, num_classes).to(device)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
