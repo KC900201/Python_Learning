@@ -3,6 +3,7 @@ import random
 
 import matplotlib.pyplot as plt
 import torch
+import torch.nn.functional as F
 import torch.optim as optim
 
 from dqn_model import env, get_screen, DQN, ReplayMemory, is_ipython, Transition
