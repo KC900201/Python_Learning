@@ -6,6 +6,8 @@ from PIL import Image
 from utils import plot_examples
 
 image = Image.open("../../Images/musk.jpeg")
+mask = Image.open("../../Images/mask.jpeg")
+mask2 = Image.open("../../Images/second_mask.jpeg")
 
 transform = A.Compose(
     [
@@ -24,10 +26,16 @@ transform = A.Compose(
 
 images_list = [image]
 image = np.array(image)
+mask = np.array(mask)  # np.asarray(mask)
+mask2 = np.array(mask2)  # np.asarray(mask)
 
-for i in range(15):
-    augmentations = transform(image=image)
+for i in range(5):
+    augmentations = transform(image=image, masks=[mask, mask2])
     augmented_img = augmentations["image"]
+    augmented_masks = augmentations["masks"]
+
     images_list.append(augmented_img)
+    images_list.append(augmented_masks[0])
+    images_list.append(augmented_masks[1])
 
 plot_examples(images_list)
