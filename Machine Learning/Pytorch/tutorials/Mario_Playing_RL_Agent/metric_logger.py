@@ -1,6 +1,8 @@
-import numpy as np
-import time, datetime
+import datetime
+import time
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class MetricLogger:
@@ -12,10 +14,10 @@ class MetricLogger:
                 f"{'MeanLength':>15}{'MeanLoss':>15}{'MeanQValue':>15}"
                 f"{'TimeDelta':>15}{'Time':>20}\n"
             )
-        self.ep_rewards_plot = save_dir / "reward_plot.jpg"
-        self.ep_lengths_plot = save_dir / "length_plot.jpg"
-        self.ep_avg_losses_plot = save_dir / "loss_plot.jpg"
-        self.ep_avg_qs_plot = save_dir / "q_plot.jpg"
+        self.ep_rewards_plot = save_dir / "reward_plot.png"
+        self.ep_lengths_plot = save_dir / "length_plot.png"
+        self.ep_avg_losses_plot = save_dir / "loss_plot.png"
+        self.ep_avg_qs_plot = save_dir / "q_plot.png"
 
         # History metrics
         self.ep_rewards = []

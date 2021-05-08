@@ -1,10 +1,11 @@
 import datetime
+from pathlib import Path
+
 import torch
 
 from agent import Mario
-from path import Path
-from model import env
 from metric_logger import MetricLogger
+from model import env
 
 use_cuda = torch.cuda.is_available()
 save_dir = Path("checkpoints") / datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
