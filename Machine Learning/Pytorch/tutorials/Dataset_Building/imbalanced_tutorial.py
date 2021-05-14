@@ -22,7 +22,7 @@ def get_loader(root_dir, batch_size):
     # Create class weights
     class_weights = [1, 50]
 
-    # Generalizaing the class weights
+    # Generalizing the class weights
     for root, subdir, files in os.walk(root_dir):
         if len(files) > 0:
             class_weights.append(1 / len(files))
