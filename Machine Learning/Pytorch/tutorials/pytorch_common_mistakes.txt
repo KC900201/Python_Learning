@@ -1,0 +1,10 @@
+1. Didn't overfit a single batch
+2. forgot to set training or eval
+3. Forgot to zero_grad()
+4. softmax with cross_entropy()
+5. bias term with BatchNorm
+6. using view as permute
+7. Incorrect data augmentation
+8. Not shuffling data
+9. Not normalizing data
+10. Not clipping gradients
