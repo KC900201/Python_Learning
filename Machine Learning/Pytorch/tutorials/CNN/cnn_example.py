@@ -6,9 +6,10 @@ import torch.optim as optim
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard, include TensorBoard Writer
 
 # Set device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu0')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters
 in_channel = 1
@@ -69,13 +70,16 @@ model = CNN().to(device)
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+writer = SummaryWriter(f'runs/MNIST/test_tensorboard_writer')
 
 if load_model:
     load_checkpoint(torch.load("my_checkpoint.pth.tar"))
 
+step = 0
 # Train Network
 for epoch in range(num_epochs):
     losses = []
+    accuracies = []
 
     # Load model
     if epoch % 2 == 0:
@@ -100,6 +104,15 @@ for epoch in range(num_epochs):
 
         # gradient descent or adam step
         optimizer.step()
+
+        # Calculate 'running' training accuracy
+        _, predictions = scores.max(1)
+        num_correct = (predictions == targets).sum()
+        running_train_acc = float(num_correct) / float(data.shape[0])
+
+        writer.add_scalar('Training loss', loss, global_step=step)
+        writer.add_scalar('Training accuracies', running_train_acc, global_step=step)
+        step += 1
 
     # print losses
     print(f'Loss  at epoch {epoch} :  {sum(losses) / len(losses):.5f}')
