@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import torchvision.utils
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard, include TensorBoard Writer
 
@@ -12,12 +13,10 @@ from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard, in
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters
-in_channel = 1
+in_channels = 1
 num_classes = 10
-learning_rate = 0.001
-batch_size = 64
-num_epochs = 5
-load_model = True
+num_epochs = 1
+load_model = False
 
 
 # Create CNN model
@@ -59,71 +58,82 @@ def load_checkpoint(checkpoint):
 
 # Load Data
 train_dataset = datasets.MNIST(root='../../../../data/', train=True, transform=transforms.ToTensor(), download=True)
-train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='../../../../data/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
-
-# Initialize network
-model = CNN().to(device)
-
-# Loss and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-writer = SummaryWriter(f'runs/MNIST/test_tensorboard_writer')
 
 #  Bad practice of setting up learning rates and batch sizes
-batch_sizes = [1, 64, 128, 1024]
+batch_sizes = [2, 64, 1024]
 learning_rates = [0.1, 0.01, 0.001, 0.0001]
 
 if load_model:
     load_checkpoint(torch.load("my_checkpoint.pth.tar"))
 
 # Continue in doing hyperparameter search (5/24/2021)
-# for batch_size in batch_sizes:
-#     for learning_rate in learning_rates:
+for batch_size in batch_sizes:
+    for learning_rate in learning_rates:
+        step = 0
 
-step = 0
-# Train Network
-for epoch in range(num_epochs):
-    losses = []
-    accuracies = []
+        # Initialize network and set to device (reset parameters by putting in loop)
+        model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
+        model.train()
+        writer = SummaryWriter(f'runs/MNIST/MiniBatchSize {batch_size} LR {learning_rate} test_tensorboard_writer')
+        # Loss and optimizer
+        criterion = nn.CrossEntropyLoss()
+        train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.0)
 
-    # Load model
-    if epoch % 2 == 0:
-        checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
-        save_checkpoint(checkpoint)
+        # Visualize model in TensorBoard
+        images, _ = next(iter(train_loader))
+        writer.add_graph(model, images.to(device))
+        writer.close()
 
-    for batch_idx, (data, targets) in enumerate(train_loader):
-        # Get data to cuda
-        data = data.to(device=device)
-        targets = targets.to(device=device)
+        # Train Network
+        for epoch in range(num_epochs):
+            losses = []
+            accuracies = []
 
-        # print(data.shape)
+            # Load model
+            if epoch % 2 == 0:
+                checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
+                save_checkpoint(checkpoint)
 
-        # forward
-        scores = model(data)
-        loss = criterion(scores, targets)
-        losses.append(loss.item())
+            for batch_idx, (data, targets) in enumerate(train_loader):
+                # Get data to cuda
+                data = data.to(device=device)
+                targets = targets.to(device=device)
 
-        # backward propagation
-        optimizer.zero_grad()
-        loss.backward()
+                # print(data.shape)
 
-        # gradient descent or adam step
-        optimizer.step()
+                # forward
+                scores = model(data)
+                loss = criterion(scores, targets)
+                losses.append(loss.item())
 
-        # Calculate 'running' training accuracy
-        _, predictions = scores.max(1)
-        num_correct = (predictions == targets).sum()
-        running_train_acc = float(num_correct) / float(data.shape[0])
+                # backward propagation
+                optimizer.zero_grad()
+                loss.backward()
 
-        writer.add_scalar('Training loss', loss, global_step=step)
-        writer.add_scalar('Training accuracies', running_train_acc, global_step=step)
-        step += 1
+                # gradient descent or adam step
+                optimizer.step()
 
-    # print losses
-    print(f'Loss  at epoch {epoch} :  {sum(losses) / len(losses):.5f}')
+                # Calculate 'running' training accuracy
+                features = data.reshape(data.shape[0], -1)
+                img_grid = torchvision.utils.make_grid(data)
+                _, predictions = scores.max(1)
+                num_correct = (predictions == targets).sum()
+                running_train_acc = float(num_correct) / float(data.shape[0])
+                accuracies.append(running_train_acc)
+
+                writer.add_scalar('Training loss', loss, global_step=step)
+                writer.add_scalar('Training accuracy', running_train_acc, global_step=step)
+                step += 1
+
+            writer.add_hparams({'Lr': learning_rate, 'bsize': batch_size}, ## Error here (iteration over a 0-d tensor)
+                               {'accuracy': sum(accuracies) / len(accuracies), 'loss': sum(loss) / len(losses), }, )
+
+            # print losses
+            print(f'Loss  at epoch {epoch} :  {sum(losses) / len(losses):.5f}')
 
 
 # Check accuracy
