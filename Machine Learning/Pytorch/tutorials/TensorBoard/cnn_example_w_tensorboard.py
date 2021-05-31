@@ -23,9 +23,9 @@ load_model = False
 class CNN(nn.Module):
     def __init__(self, in_channels=1, num_classes=10):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, stride=1, padding=1)
         self.fc1 = nn.Linear(16 * 7 * 7, num_classes)  # FULLY connected layer
 
     def forward(self, x):
@@ -60,10 +60,12 @@ def load_checkpoint(checkpoint):
 train_dataset = datasets.MNIST(root='../../../../data/', train=True, transform=transforms.ToTensor(), download=True)
 
 test_dataset = datasets.MNIST(root='../../../../data/', train=False, transform=transforms.ToTensor(), download=True)
+# test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 #  Bad practice of setting up learning rates and batch sizes
 batch_sizes = [2, 64, 1024]
 learning_rates = [0.1, 0.01, 0.001, 0.0001]
+classes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 if load_model:
     load_checkpoint(torch.load("my_checkpoint.pth.tar"))
@@ -76,12 +78,12 @@ for batch_size in batch_sizes:
         # Initialize network and set to device (reset parameters by putting in loop)
         model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
         model.train()
+        train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.0)
+
         writer = SummaryWriter(f'runs/MNIST/MiniBatchSize {batch_size} LR {learning_rate} test_tensorboard_writer')
         # Loss and optimizer
         criterion = nn.CrossEntropyLoss()
-        train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.0)
 
         # Visualize model in TensorBoard
         images, _ = next(iter(train_loader))
@@ -125,12 +127,24 @@ for batch_size in batch_sizes:
                 running_train_acc = float(num_correct) / float(data.shape[0])
                 accuracies.append(running_train_acc)
 
+                class_labels = [classes[label] for label in predictions]
+                writer.add_image("mnist_images", img_grid)
+                writer.add_histogram("fc1", model.fc1.weight)
+
                 writer.add_scalar('Training loss', loss, global_step=step)
                 writer.add_scalar('Training accuracy', running_train_acc, global_step=step)
+
+                # if batch_idx == 230:
+                #     writer.add_embedding(features, metadata=class_labels, label_img=data, global_step=batch_idx)
                 step += 1
 
-            writer.add_hparams({'Lr': learning_rate, 'bsize': batch_size}, ## Error here (iteration over a 0-d tensor)
-                               {'accuracy': sum(accuracies) / len(accuracies), 'loss': sum(loss) / len(losses), }, )
+            writer.add_hparams(
+                {"lr": learning_rate, "bsize": batch_size},
+                {
+                    "accuracy": sum(accuracies) / len(accuracies),
+                    "loss": sum(losses) / len(losses),
+                },
+            )
 
             # print losses
             print(f'Loss  at epoch {epoch} :  {sum(losses) / len(losses):.5f}')
@@ -164,6 +178,5 @@ def check_acc(loader, model):
 
     # return acc
 
-
-check_acc(train_loader, model)
-check_acc(test_loader, model)
+# check_acc(train_loader, model)
+# check_acc(test_loader, model)
