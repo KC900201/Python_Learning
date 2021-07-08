@@ -24,6 +24,7 @@ class LeNet(nn.Module):
         x = self.linear2(x)
         return x
 
+
 x = torch.randn(64, 1, 32, 32)
 model = LeNet()
 print(model(x).shape)
