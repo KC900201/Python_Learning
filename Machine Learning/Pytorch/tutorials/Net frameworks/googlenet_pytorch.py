@@ -2,7 +2,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional
-import torchvision
 
 
 class conv_block(nn.Module):
