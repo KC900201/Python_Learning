@@ -1,17 +1,19 @@
 import torch
+import torch.nn as nn  # All neural networks, nn.Linear, nn.Conv2d
+import torch.optim as optim  # For all Optimization algorithms, SGD, Adam, etc
 import torchvision
-import torch.nn as nn # All neural networks, nn.Linear, nn.Conv2d
-import torch.optim as optim # For all Optimization algorithms, SGD, Adam, etc
-import torchvision.datasets as datasets # Has standard datasets
-import torchvision.transforms as transforms # Transformations we can perform on our dataset
-from torch.utils.data import DataLoader # Gives easier dataset management
-from torch.utils.tensorboard import SummaryWriter # to print to tensorboard
-from model_utils import Discriminator, Generator # Import self-defined models
+import torchvision.datasets as datasets  # Has standard datasets
+import torchvision.transforms as transforms  # Transformations we can perform on our dataset
+from torch.utils.data import DataLoader  # Gives easier dataset management
+from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
+from tqdm import tqdm
+
+from model_utils import Discriminator, Generator  # Import self-defined models
 
 # Hyperparameters
 lr = 0.0002
 batch_size = 64
-image_size = 64 # 28 x 28
+image_size = 64  # 28 x 28
 channels_img = 1
 channels_noise = 256
 num_epochs = 10
@@ -54,10 +56,14 @@ writer_real = SummaryWriter(f'runs/GAN_MNIST/test_fake')
 print("Starting training...")
 
 for epoch in range(num_epochs):
-    for batch_idx, (data, targets) in enumerate(dataloader):
+    # for batch_idx, (data, targets) in tqdm(enumerate(dataloader), leave=False): # Import tqdm to see progress bar
+    # for batch_idx, (data, targets) in tqdm(enumerate(dataloader), total=len(dataloader), # Method 2 of tqdm, setting total = len(dataloader)
+    #                                        leave=False):
+    loop = tqdm(enumerate(dataloader), total=len(dataloader), leave=False)
+    for batch_idx, (data, targets) in loop:
         data = data.to(device)
         batch_size = data.shape[0]
-#         Train Discriminator: max log(D(x)) + log(1 - D(G(z))\
+        #         Train Discriminator: max log(D(x)) + log(1 - D(G(z))\
         netD.zero_grad()
         label = (torch.ones(batch_size) * 0.9).to(device)
         output = netD(data).reshape(-1)
@@ -66,7 +72,7 @@ for epoch in range(num_epochs):
 
         noise = torch.randn(batch_size, channels_noise, 1, 1).to(device)
         fake = netG(noise)
-        label = (torch.ones(batch_size)*0.1).to(device)
+        label = (torch.ones(batch_size) * 0.1).to(device)
 
         output = netD(fake.detach()).reshape(-1)
         lossD_fake = criterion(output, label)
@@ -75,7 +81,7 @@ for epoch in range(num_epochs):
         lossD.backward()
         optimizerD.step()
 
-#         Train Generator: max_log(D(G(z)))
+        #         Train Generator: max_log(D(G(z)))
         netG.zero_grad()
         label = torch.ones(batch_size).to(device)
         output = netD(fake).reshape(-1)
@@ -83,8 +89,12 @@ for epoch in range(num_epochs):
         lossG.backward()
         optimizerG.step()
 
+        # Update progress bar
+        loop.set_description(f"Epoch [{epoch}/{num_epochs}]")
+        loop.set_postfix(loss=lossG.item(), acc=torch.rand(1).item())
+
         if batch_idx % 100 == 0:
-            print(f'Epoch [{epoch}/{num_epochs}] Batch {batch_idx}/{len(dataloader)} \
+            print(f' Epoch [{epoch}/{num_epochs}] Batch {batch_idx}/{len(dataloader)} \
                   loss D: {lossD:.4f}, {lossG:.4f} D(x): {D_x:.4f}')
 
             with torch.no_grad():
@@ -93,4 +103,3 @@ for epoch in range(num_epochs):
                 img_grid_fake = torchvision.utils.make_grid(fake[:32], normalize=True)
                 writer_real.add_image('MNIST real images', img_grid_real)
                 writer_real.add_image('MNIST fake images', img_grid_fake)
-
