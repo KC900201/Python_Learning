@@ -15,6 +15,7 @@ NUM_WORKERS = 4
 HIGH_RES = 96
 LOW_RES = HIGH_RES // 4
 IMG_CHANNELS = 3
+LAMBDA_GP = 10
 
 highres_transform = A.Compose(
     [
