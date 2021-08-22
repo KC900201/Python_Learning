@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.transforms as transforms
 import torchvision.models as models
-
-from torchvision.utils import save_image
+import torchvision.transforms as transforms
 from PIL import Image
+from torchvision.utils import save_image
 
 # model = models.vgg19(pretrained=True).features
 
@@ -54,7 +53,7 @@ class VGG(nn.Module):
 
 if __name__ == '__main__':
     model = VGG().to(device).eval()
-    original_img = model.load_image("ramen.jpg")
+    original_img = model.load_image("self_portrait.jpg")
     style_img = model.load_image("style_hokusai.jpg")
     generated = original_img.clone().requires_grad_(True)
 
