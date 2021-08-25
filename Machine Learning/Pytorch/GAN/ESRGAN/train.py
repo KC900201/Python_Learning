@@ -1,8 +1,15 @@
 import torch
+from torch import optim
+from torch import nn
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 import config
-from utils import gradient_penalty
+from dataset import MyImageFolder
+from loss import VGGLoss
+from model import Generator, Discriminator, initialize_weights
+from utils import gradient_penalty, load_checkpoint, save_checkpoint, plot_examples
 
 torch.backends.cudnn.benchmark = True
 
@@ -49,4 +56,53 @@ def train_fn(
 
         opt_gen.zero_grad()
         g_scaler.scale(gen_loss).backward()
-#         Continue tomorrow (8/23/2021)
+        g_scaler.step(opt_gen)
+        g_scaler.update()
+
+        writer.add_scalar("Critic loss", loss_critic.item(), global_step=tb_step)
+        tb_step += 1
+
+        if idx % 100 == 0 and idx > 0:
+            plot_examples("test_images/", gen)
+
+        loop.set_postfix(gp=gp.item(),
+                         critic=loss_critic.item(),
+                         l1=l1_loss.item(),
+                         vgg=loss_for_vgg.item(),
+                         adversarial=adversarial_loss.item(),
+                         )
+
+        return tb_step
+
+
+def main():
+    dataset = MyImageFolder(root_dir="data/")
+    loader = DataLoader(
+        dataset,
+        batch_size=config.BATCH_SIZE,
+        shuffle=True,
+        pin_memory=True,
+        num_workers=config.NUM_WORKERS,
+    )
+    # Set up parameters (8/25/2021)
+    # gen = Generator()
+    # disc = Discriminator()
+    # initialize_weights(gen)
+    # opt_gen = optim.Adam()
+    # opt_disc = optim.Adam()
+    # writer = SummaryWriter("logs")
+    # tb_step = 0
+    # l1 = nn.L1Loss()
+    # gen.train()
+    # disc.train()
+    # vgg_loss = VGGLoss()
+    # g_scaler = torch.cuda.amp.GradScalar()
+    # d_scaler = torch.cuda.amp.GradScalar()
+    #
+    # if config.LOAD_MODEL:
+    #     load_checkpoint()
+    #     load_checkpoint()
+
+
+if __name__ == '__main__':
+    train()
