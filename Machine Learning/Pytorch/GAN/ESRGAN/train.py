@@ -85,24 +85,64 @@ def main():
         num_workers=config.NUM_WORKERS,
     )
     # Set up parameters (8/25/2021)
-    # gen = Generator()
-    # disc = Discriminator()
-    # initialize_weights(gen)
-    # opt_gen = optim.Adam()
-    # opt_disc = optim.Adam()
-    # writer = SummaryWriter("logs")
-    # tb_step = 0
-    # l1 = nn.L1Loss()
-    # gen.train()
-    # disc.train()
-    # vgg_loss = VGGLoss()
-    # g_scaler = torch.cuda.amp.GradScalar()
-    # d_scaler = torch.cuda.amp.GradScalar()
-    #
-    # if config.LOAD_MODEL:
-    #     load_checkpoint()
-    #     load_checkpoint()
+    gen = Generator(in_channels=3).to(config.DEVICE)
+    disc = Discriminator(in_channels=3).to(config.DEVICE)
+    initialize_weights(gen)
+    opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.0, 0.9))
+    opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(0.0, 0.9))
+    writer = SummaryWriter("logs")
+    tb_step = 0
+    l1 = nn.L1Loss()
+    gen.train()
+    disc.train()
+    vgg_loss = VGGLoss()
+    g_scaler = torch.cuda.amp.GradScalar()
+    d_scaler = torch.cuda.amp.GradScalar()
+
+    if config.LOAD_MODEL:
+        load_checkpoint(
+            config.CHECKPOINT_GEN,
+            gen,
+            opt_gen,
+            config.LEARNING_RATE
+        )
+        load_checkpoint(
+            config.CHECKPOINT_DISC,
+            disc,
+            opt_disc,
+            config.LEARNING_RATE
+        )
+
+    for epoch in range(config.NUM_EPOCHS):
+        tb_step = train_fn(
+            loader,
+            disc,
+            gen,
+            opt_gen,
+            opt_disc,
+            l1,
+            vgg_loss,
+            g_scaler,
+            d_scaler,
+            writer,
+            tb_step
+        )
+
+    if config.SAVE_MODEL:
+        save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
+        save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
 
 
 if __name__ == '__main__':
-    train()
+    try_model = False
+
+    if try_model:
+        # Will just use pretrained weights and run on images
+        # in test_images/ and save the ones to SR in saved/
+        gen = Generator(in_channels=3).to(config.DEVICE)
+        opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.0, 0.9))
+        load_checkpoint(config.CHECKPOINT_GEN, gen, opt_gen, config.LEARNING_RATE, )
+        plot_examples("test_images/", gen)
+    else:
+        # This will train from scratch
+        main()
