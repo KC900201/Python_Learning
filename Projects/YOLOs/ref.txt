@@ -1,0 +1,3 @@
+YOLOv5 -> https://docs.ultralytics.com/#what-is-yolov5
+YOLOv4 -> (github) https://github.com/Tianxiaomo/pytorch-YOLOv4
+                   https://github.com/AlexeyAB/darknet
