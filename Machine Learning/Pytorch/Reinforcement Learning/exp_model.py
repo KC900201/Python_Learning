@@ -1,10 +1,9 @@
 # Import libraries
+import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
-
 import torch.optim as optim
-import numpy as np
 
 
 # Deep Q learning agent class
@@ -57,4 +56,36 @@ class Agent(object):
     def storeTransition(self, state, action, reward, state_):
         if self.memCntr < self.memSize:
             # append memory as list
-            self.memory.append() # Continue 10/6/2021
+            self.memory.append([state, action, reward, state_])
+        else:
+            self.memory[self.memCntr % self.memSize] = [state, action, reward, state_]
+        self.memCntr += 1
+
+    def chooseAction(self, observation):
+        rand = np.random.random()
+        actions = self.Q_eval.forward(observation)
+        if rand < 1 - self.EPSILON:
+            action = T.argmax(actions[1]).item()
+        else:
+            action = np.random.choice(self.actionSpace)
+        self.steps += 1
+        return action
+
+    def learn(self, batch_size):
+        # batch learning = learning by batch size
+        self.Q_eval.optimizer.zero_grad()
+        if self.replace_target_cntr is not None and self.learn_step_counter % self.replace_target_cntr == 0:
+            self.Q_next.load_state_dict(self.Q_eval.state_dict())
+
+        if self.memCntr + batch_size < self.memSize:
+            memStart = int(np.random.choice(range(self.memCntr)))
+        else:
+            memStart = int(np.random.choice(range(self.memCntr - batch_size - 1)))
+        miniBatch = self.memory[memStart:memStart + batch_size]
+        memory = np.array(miniBatch)
+
+        Qpred = self.Q_eval.forward(list(memory[:, 0][:])).to(self.Q_eval.device)
+        Qnext = self.Q_next.forward(list(memory[:, 3][:])).to(self.Q_eval.device)
+
+        # Max action for agent next state
+        maxA = T.argmax(Qnext, dim=1)
