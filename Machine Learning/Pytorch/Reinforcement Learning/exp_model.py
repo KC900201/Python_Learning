@@ -88,4 +88,19 @@ class Agent(object):
         Qnext = self.Q_next.forward(list(memory[:, 3][:])).to(self.Q_eval.device)
 
         # Max action for agent next state
-        maxA = T.argmax(Qnext, dim=1)
+        maxA = T.argmax(Qnext, dim=1).to(self.Q_eval.device)
+        rewards = T.Tensor(list(memory[:, 2])).to(self.Q_eval.device)
+        # Loss computation
+        Qtarget = Qpred  # related to Qnext
+        Qtarget[:, maxA] = rewards + self.GAMMA * T.max(Qnext[1])
+
+        if self.steps > 500:
+            if self.EPSILON - 1e-4 > self.EPS_END:
+                self.EPSILON -= 1e-4
+            else:
+                self.EPSILON = self.EPS_END
+
+        loss = self.Q_eval.loss(Qtarget, Qpred).to(self.Q_eval.device)
+        loss.backward()  # backpropagation of loss
+        self.Q_eval.optimizer.step()
+        self.learn_step_counter += 1
