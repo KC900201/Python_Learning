@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 brain.storeTransition(np.mean(observation[15:200, 30:125], axis=2), action, reward,
                                       np.mean(observation_[15:200, 30:125], axis=2))
                 observation = observation_
-                brain.lean(batch_size)
+                brain.learn(batch_size)
                 lastAction = action
                 env.render()
 
