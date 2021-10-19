@@ -11,7 +11,7 @@ class GridWorld(object):
         self.m = m  # row
         self.n = n  # col
         self.stateSpace = [i for i in range(self.m * self.n)]
-        self.stateSpace.remove(self.m * selfn - 1)
+        self.stateSpace.remove(self.m * self.n - 1)
         self.stateSpacePlus = [i for i in range(self.m * self.n)]
         self.actionSpace = {'U': -self.m, 'D': self.m, 'L': -1, 'R': 1}
         self.possibleActions = ['U', 'D', 'L', 'R']
@@ -37,6 +37,7 @@ class GridWorld(object):
     def getAgentRowAndColumn(self):
         x = self.agentPosition // self.n
         y = self.agentPosition % self.n
+        return x, y
 
     def setState(self, state):
         x, y = self.getAgentRowAndColumn()
@@ -97,3 +98,63 @@ class GridWorld(object):
                     print('Bout', end='\t')
             print('\n')
         print('----------------------------------------')
+
+    def actionSpaceSample(self):
+        return np.random.choice(self.possibleActions)
+
+
+def maxAction(Q, state, actions):
+    values = np.array([Q[state, a] for a in actions])
+    action = np.argmax(values)
+
+    return actions[action]
+
+
+# Main function
+if __name__ == '__main__':
+    # Continue add description for main functions (10/19/2021)
+    magicSquares = {18: 54, 63: 14}
+    env = GridWorld(9, 9, magicSquares)  # Initialize Rlearning environment
+
+    ALPHA = 0.1  # learning rate
+    GAMMA = 1.0
+    EPS = 1.0  # epsilon
+
+    Q = {}
+
+    for state in env.stateSpacePlus:
+        for action in env.possibleActions:
+            Q[state, action] = 0
+
+    numGames = 50000
+    totalRewards = np.zeros(numGames)
+    env.render()
+
+    for i in range(numGames):
+        if i % 5000 == 0:
+            print('Starting game:')
+
+        done = False
+        epRewards = 0
+        observation = env.reset()
+
+        while not done:
+            rand = np.random.random()
+            action = maxAction(Q, observation, env.possibleActions) if rand < (1 - EPS) \
+                else env.actionSpaceSample()
+            observation_, reward, done, info = env.step(action)
+            epRewards += reward
+            action_ = maxAction(Q, observation_, env.possibleActions)
+            Q[observation, action] = Q[observation, action] + ALPHA * (
+                    reward + GAMMA * Q[observation_, action_] - Q[observation, action])
+            observation = observation_
+
+        if EPS - 2 / numGames > 0:
+            EPS -= 2 / numGames
+        else:
+            EPS = 0
+
+        totalRewards[i] = epRewards
+
+    plt.plot(totalRewards)
+    plt.show()
