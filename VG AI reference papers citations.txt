@@ -26,6 +26,11 @@ Existing AI frameworks for research
 40 - Arcade Learning Environment (ALE) framework
 681 - TorchCraft from Facebook AI
 528 - General Video Game AI Competition
+464 - Deep Q learning network (reinforcement learning)
+
+Game AI benchmarking
+--------------------
+223, 528, 40
 
 Datasets for research
 ---------------------

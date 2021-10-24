@@ -1,8 +1,8 @@
 # Ref -> https://www.youtube.com/watch?v=ELE2_Mftqoc&t=6416s&ab_channel=freeCodeCamp.org
 
+import matplotlib.pyplot as plt
 # Import libraries
 import numpy as np
-import matplotlib as plt
 
 
 class GridWorld(object):
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     for i in range(numGames):
         if i % 5000 == 0:
-            print('Starting game:')
+            print('Starting game:', i)
 
         done = False
         epRewards = 0
