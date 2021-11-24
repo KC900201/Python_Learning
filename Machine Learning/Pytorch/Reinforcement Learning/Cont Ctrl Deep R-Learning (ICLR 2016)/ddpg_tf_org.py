@@ -94,7 +94,9 @@ class Actor(object):
     def build_network(self):
         with tf.compat.v1.variable_scope(self.name):
             # self.input = tf.placeholder(tf.float32, shape=[None, self. * input_dims], name='inputs') // wait for fixation
-            self.action_gradient = tf.placeholder(tf.float32, shape=[None, self.n_actions])
+            self.action_gradient = tf.keras.Input(dtype=tf.float32,
+                                                  shape=[None,
+                                                         self.n_actions], )  # replace placeholder with keras.Input
 
             f1 = 1 / np.sqrt(self.fc1_dims)
             dense1 = tf.keras.layers.Dense(
@@ -127,4 +129,42 @@ class Actor(object):
     def train(self, inputs, gradients):
         self.sess.run(self.optimize, feed_dict={self.inputs: inputs, self.action_gradient: gradients})
 
-    # Continue 11/22/2021
+    def save_checkpoint(self):
+        print('... save checkpoint ...')
+        self.saver.save(self.sess, self.checkpoint_file)
+
+    def load_checkpoint(self):
+        print('... loading checkpoint ...')
+        self.saver.restore(self.sess, self.checkpoint_file)
+
+
+def Critic(object):
+    def __init__(self, lr, n_actions, name, input_dims, sess, fc1_dims,
+                 fc2_dims, batch_size=64, chkpt_dir='tmp/ddpg'):
+        self.lr = lr
+        self.n_actions = n_actions
+        self.name = name
+        self.fc1_dims = fc1_dims
+        self.fc2_dims = fc2_dims
+        self.sess = sess
+        self.batch_size = batch_size
+        self.chkpt_dir = chkpt_dir
+        self.build_network()
+        self.params = tf.Module.trainable_variables(scope=self.name)  # using tensorflow v2 module
+        self.saver = tf.train.Checkpoint()  # migrate to tensorflow v2 (Saver is v1)
+        self.checkpoint_file = os.path.join(chkpt_dir, name + '_ddpg.ckpt')
+        self.optimize = tf.keras.optimizers.Adam(self.lr).minimize(self.loss)
+
+        self.action_gradients = tf.gradients(self.q, self.actions)
+
+    def build_network(self):
+        with tf.compat.v1.variable_scope(self.name):
+            self.input = tf.keras.Input(dtype=tf.float32,
+                                        shape=[None, *self.input_dims],
+                                        name='inputs')  # replace placeholder with keras.Input
+            self.actions = tf.keras.Input(dtype=tf.float32,
+                                          shape=[None, self.n_actions],
+                                          name='actions')
+            self.q_target = tf.keras.Input(dtype=tf.float32,
+                                           shape=[None, 1],
+                                           name='targets')
