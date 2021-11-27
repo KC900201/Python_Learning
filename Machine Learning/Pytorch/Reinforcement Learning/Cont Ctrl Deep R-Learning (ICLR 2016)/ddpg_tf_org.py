@@ -168,3 +168,80 @@ def Critic(object):
             self.q_target = tf.keras.Input(dtype=tf.float32,
                                            shape=[None, 1],
                                            name='targets')
+
+            f1 = 1 / np.sqrt(self.fc1_dims)
+            dense1 = tf.keras.layers.Dense(
+                self.input, units=self.fc1_dims,
+                kernel_initializer=random_uniform(shape=(-f1, f1)),  # tensorflow v2 model
+                bias_initializer=random_uniform(shape=(-f1, f1))
+            )
+            batch1 = tf.keras.layers.BatchNormalization(dense1)
+            layer1_activation = tf.nn.relu(batch1)
+
+            f2 = 1 / np.sqrt(self.fc2_dims)
+            dense2 = tf.keras.layers.Dense(
+                self.input, units=self.fc2_dims,
+                kernel_initializer=random_uniform(shape=(-f2, f2)),  # tensorflow v2 model
+                bias_initializer=random_uniform(shape=(-f2, f2))
+            )
+            batch2 = tf.keras.layers.BatchNormalization(dense2)
+            action_in = tf.layers.dense(self.actions, units=self.fc2_dims,
+                        activation='relu')
+            
+            state_actions = tf.add(batch2, action_in)
+            state_actions = tf.nn.relu(state_actions)
+
+            f3 = 0.003
+            self.q = tf.layers.dense(state_actions, units=1,
+                                    kernel_initializers=random_uniform(-f3, f3),
+                                    bias_initializer=random_uniform(-f3,f3),
+                                    kernel_regularizer=tf.keras.regularizers.l2(0.01))
+            self.loss = tf.losses.mean_squared_error(self.q_target, self.q)
+
+    def predict(self, inputs, actions):
+        return self.sess.run(self.q, feed_dict={self.input: inputs,
+                                                self.actions: actions})
+                                        
+    def train(self, inputs, actions, q_target):
+        return self.sess.run(self.optimize, feed_dict={self.input: inputs,
+                                            self.actions: actions,
+                                            self.q_target: q_target})
+    
+    def get_action_gradients(self, inputs, actions):
+        return self.sess.run(self.action_gradients,
+                             feed_dict={self.input: inputs,
+                                        self.actions: actions})
+
+    def save_checkpoint(self):
+        print('... save checkpoint ...')
+        self.saver.save(self.sess, self.checkpoint_file)
+
+    def load_checkpoint(self):
+        print('... loading checkpoint ...')
+        self.saver.restore(self.sess, self.checkpoint_file)
+
+def Agent(object):
+    def __init__(self, alpha, beta, input_dims, tau, env, gamma=0.99,
+                n_actions=2, max_size=1000000, layer1_size=400, layer2_size=300,
+                batch_size=64):
+            self.gamma = gamma
+            self.tau = tau
+            self.memory = ReplayBuffer(max_size, input_dims, n_actions)
+            self.batch_size = batch_size
+            self.sess = tf.Session()
+            self.actor = Actor(alpha, n_actions, 'Actor', input_dims, self.sess, 
+                                layer1_size, layer2_size, env.action_space.high)
+            self.critic = Critic(beta, n_actions, 'Critic', input_dims, self.sess,
+                                 layer1_size, layer2_size)
+            self.target_actor = Actor(alpha, n_actions, 'TargetActor', input_dims, 
+                                self.sess, layer1_size, layer2_size, env.action_space.high)
+            self.target_critic = Critic(beta, n_actions, 'TargetCritic', input_dims, 
+                                self.sess, layer1_size, layer2_size)
+            self.noise = OUActionNoise(mu=np.zeros(n_actions))
+
+            self.update_critic = [self.target_critic.params[i].assign(tf.multiply(self.critic.params[i], self.tau) \
+                + tf.multiply(self.target_critic.params[i], 1. - self.tau)) for i in range(len(self.target_critic.params))]
+            
+            self.update_actor = [self.target_actor.params[i].assign(tf.multiply(self.actor.params[i], self.tau) \
+                + tf.multiply(self.target_actor.params[i], 1. - self.tau)) for i in range(len(self.target_actor.params))]
+    
