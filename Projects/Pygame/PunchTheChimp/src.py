@@ -146,10 +146,10 @@ if __name__ == '__main__':
     pygame.display.flip()
     #     Prepare game object
     # Fix game object image directory first
-    # whiff_sound = load_sound("../whiff.wav")
-    # punch_sound = load_sound("../punch.wav")
-    # chimp = Chimp()
-    # fist = Fist()
+    whiff_sound = load_sound("../whiff.wav")
+    punch_sound = load_sound("../punch.wav")
+    chimp = Chimp()
+    fist = Fist()
     allsprites = pg.sprite.RenderPlain((fist, chimp))
     clock = pg.time.Clock()
     # Prepare main loop
