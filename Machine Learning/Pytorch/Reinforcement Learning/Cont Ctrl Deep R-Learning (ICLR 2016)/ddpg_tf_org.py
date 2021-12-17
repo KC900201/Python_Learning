@@ -94,7 +94,7 @@ class Actor():
 
     def build_network(self):
         with tf.compat.v1.variable_scope(self.name):
-            self.input = tf.placeholder(tf.float32, shape=[None, *self.input_dims], name='inputs')
+            self.input = tf.compat.v1.placeholder(tf.float32, shape=[None, *self.input_dims], name='inputs') # fix error - RuntimeError: tf.placeholder() is not compatible with eager execution.
             self.action_gradient = tf.keras.Input(dtype=tf.float32,
                                                   shape=[None,
                                                          self.n_actions], )  # replace placeholder with keras.Input
@@ -231,7 +231,7 @@ class Agent():
         self.tau = tau
         self.memory = ReplayBuffer(max_size, input_dims, n_actions)
         self.batch_size = batch_size
-        self.sess = tf.Session()
+        self.sess = tf.compat.v1.Session()  # https://stackoverflow.com/questions/55142951/tensorflow-2-0-attributeerror-module-tensorflow-has-no-attribute-session
         self.actor = Actor(alpha, n_actions, 'Actor', input_dims, self.sess,
                            layer1_size, layer2_size, env.action_space.high)
         self.critic = Critic(beta, n_actions, 'Critic', input_dims, self.sess,
