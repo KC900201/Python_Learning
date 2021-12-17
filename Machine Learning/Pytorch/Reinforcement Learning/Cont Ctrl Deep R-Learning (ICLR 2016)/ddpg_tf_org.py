@@ -69,11 +69,12 @@ class ReplayBuffer(object):
         return states, actions, rewards, new_states, terminal
 
 
-class Actor(object):
+class Actor():
     def __init__(self, lr, n_actions, name, input_dims, sess, fc1_dims, fc2_dims, action_bound, batch_size=64,
                  chkpt_dir='tmp/ddpg'):
         self.lr = lr
         self.n_actions = n_actions
+        self.input_dims = input_dims
         self.name = name
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
@@ -93,7 +94,7 @@ class Actor(object):
 
     def build_network(self):
         with tf.compat.v1.variable_scope(self.name):
-            # self.input = tf.placeholder(tf.float32, shape=[None, self. * input_dims], name='inputs') // wait for fixation
+            self.input = tf.placeholder(tf.float32, shape=[None, *self.input_dims], name='inputs')
             self.action_gradient = tf.keras.Input(dtype=tf.float32,
                                                   shape=[None,
                                                          self.n_actions], )  # replace placeholder with keras.Input
@@ -138,12 +139,13 @@ class Actor(object):
         self.saver.restore(self.sess, self.checkpoint_file)
 
 
-def Critic(object):
+class Critic(object):
     def __init__(self, lr, n_actions, name, input_dims, sess, fc1_dims,
                  fc2_dims, batch_size=64, chkpt_dir='tmp/ddpg'):
         self.lr = lr
         self.n_actions = n_actions
         self.name = name
+        self.input_dims = input_dims
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.sess = sess
@@ -221,7 +223,7 @@ def Critic(object):
         self.saver.restore(self.sess, self.checkpoint_file)
 
 
-def Agent(object):
+class Agent():
     def __init__(self, alpha, beta, input_dims, tau, env, gamma=0.99,
                  n_actions=2, max_size=1000000, layer1_size=400, layer2_size=300,
                  batch_size=64):
