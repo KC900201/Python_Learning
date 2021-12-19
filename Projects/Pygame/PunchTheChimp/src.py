@@ -2,8 +2,8 @@
 
 # Import Modules
 import os
+
 import pygame as pg
-import pygame.display
 
 if not pg.font:
     print("Fonts disabled")
@@ -53,7 +53,7 @@ class Fist(pg.sprite.Sprite):
 
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image, self.rect = load_image("../fist.png", 1)
+        self.image, self.rect = load_image("fist.png", 1)
         self.fist_offset = (-235, -80)
         self.punching = False
 
@@ -82,7 +82,7 @@ class Chimp(pg.sprite.Sprite):
 
     def __init__(self):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        self.image, self.rect = load_image("../chimp.png", -1, 4)
+        self.image, self.rect = load_image("chimp.png", -1, 4)
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.rect.topleft = 10, 90
@@ -125,56 +125,70 @@ class Chimp(pg.sprite.Sprite):
             self.original = self.image
 
 
-if __name__ == '__main__':
+# main function
+def main():
+    """this function is called when the program starts.
+    it initializes everything it needs, then runs in
+    a loop until the function returns."""
+    # Initialize Everything
     pg.init()
-    screen = pg.display.set_mode((1280, 480), pg.SCALED)
+    screen = pg.display.set_mode((1280, 600), pg.SCALED)
     pg.display.set_caption("Monkey Fever")
     pg.mouse.set_visible(False)
 
-    #     Create the background
+    # Create The Backgound
     background = pg.Surface(screen.get_size())
     background = background.convert()
     background.fill((170, 238, 187))
-    #     Put text on background, centered
+
+    # Put Text On The Background, Centered
     if pg.font:
         font = pg.font.Font(None, 64)
-        text = font.render("Pummel and The Chimp, And Win $$$", True, (10, 10, 10))
+        text = font.render("Pummel The Chimp, And Win $$$", True, (10, 10, 10))
         textpos = text.get_rect(centerx=background.get_width() / 2, y=10)
         background.blit(text, textpos)
-    #     Display background while setup finishes
+
+    # Display The Background
     screen.blit(background, (0, 0))
-    pygame.display.flip()
-    #     Prepare game object
-    # Fix game object image directory first
-    whiff_sound = load_sound("../whiff.wav")
-    punch_sound = load_sound("../punch.wav")
+    pg.display.flip()
+
+    # Prepare Game Objects
+    whiff_sound = load_sound("whiff.wav")
+    punch_sound = load_sound("punch.wav")
     chimp = Chimp()
     fist = Fist()
     allsprites = pg.sprite.RenderPlain((fist, chimp))
     clock = pg.time.Clock()
-    # Prepare main loop
+
+    # Main Loop
     going = True
     while going:
         clock.tick(60)
 
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            going = False
-        elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-            going = False
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            if fist.punch(chimp):
-                punch_sound.play()  # punch
-                chimp.punched()
-            else:
-                whiff_sound.play()  # miss
-        elif event.type == pg.MOUSEBUTTONUP:
-            fist.unpunch()
-    # Update sprites
-    allsprites.update()
-    # Draw the entire scene
-    screen.blit(background, (0, 0))
-    allsprites.draw(screen)
-    pygame.display.flip()
-    # GAME OVER
+        # Handle Input Events
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                going = False
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                going = False
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if fist.punch(chimp):
+                    punch_sound.play()  # punch
+                    chimp.punched()
+                else:
+                    whiff_sound.play()  # miss
+            elif event.type == pg.MOUSEBUTTONUP:
+                fist.unpunch()
+
+        allsprites.update()
+
+        # Draw Everything
+        screen.blit(background, (0, 0))
+        allsprites.draw(screen)
+        pg.display.flip()
+
     pg.quit()
+
+
+if __name__ == '__main__':
+    main()
