@@ -1,0 +1,43 @@
+Useful citations from book (Artificial Intelligence and Games)
+-----------------------------
+General intro
+-------------
+407, 764, 785
+
+General Game AI
+------------------
+718
+
+AI for game production
+----------------------
+564
+
+Survey papers
+-------------
+406 - state of the art and beginning of AI research field
+405 - computational intelligence in games
+
+Game Turing test
+-------------------
+263. 619
+
+Existing AI frameworks for research
+---------------------
+40 - Arcade Learning Environment (ALE) framework
+681 - TorchCraft from Facebook AI
+528 - General Video Game AI Competition
+464 - Deep Q learning network (reinforcement learning)
+
+Game AI benchmarking
+--------------------
+223, 528, 40
+
+Datasets for research
+---------------------
+OpenDota
+
+Web URL for conferences
+-----------------------
+http://www.gdconf.com/conference/ai.html
+http://www.gdcvault.com/
+https://nucl.ai/
